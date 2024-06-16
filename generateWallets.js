@@ -1,5 +1,6 @@
 const { DirectSecp256k1HdWallet } = require("@cosmjs/proto-signing");
 const fs = require("fs");
+const { createObjectCsvWriter } = require('csv-writer');
 
 const generateWallets = async (numOfWallets) => {
   const wallets = [];
@@ -14,15 +15,29 @@ const generateWallets = async (numOfWallets) => {
   return wallets;
 };
 
-const saveWalletsToFile = (wallets, filename) => {
-  const data = JSON.stringify(wallets, null, 2);
-  fs.writeFileSync(filename, data);
+const saveWalletsToCSV = (wallets, filename) => {
+  const csvWriter = createObjectCsvWriter({
+    path: filename,
+    header: [
+      { id: 'address', title: 'Address' },
+      { id: 'mnemonic', title: 'Mnemonic' }
+    ]
+  });
+
+  return csvWriter.writeRecords(wallets);
 };
 
 const numOfWallets = 100; // Укажите количество кошельков, которое хотите создать
-const outputFilename = "wallets.json"; // Имя файла для сохранения данных
+const outputFilename = "wallets.csv"; // Имя файла для сохранения данных в формате CSV
 
-generateWallets(numOfWallets).then((wallets) => {
-  saveWalletsToFile(wallets, outputFilename);
-  console.log(`Создано ${numOfWallets} кошельков и сохранено в ${outputFilename}`);
-});
+generateWallets(numOfWallets)
+  .then((wallets) => {
+    return saveWalletsToCSV(wallets, outputFilename);
+  })
+  .then(() => {
+    console.log(`Создано ${numOfWallets} кошельков и сохранено в ${outputFilename}`);
+  })
+  .catch((error) => {
+    console.error('Ошибка:', error);
+  });
+
